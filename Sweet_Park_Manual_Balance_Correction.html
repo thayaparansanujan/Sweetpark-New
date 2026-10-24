@@ -1,0 +1,1284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sweet Park | Finance & Collection Management</title>
+<style>
+:root{--bg:#f5f7fb;--card:#fff;--text:#172033;--muted:#6b7280;--primary:#2563eb;--green:#16a34a;--red:#dc2626;--orange:#ea580c;--border:#e5e7eb}
+*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:var(--bg);color:var(--text)}
+header{background:#111827;color:#fff;padding:16px 20px;position:sticky;top:0;z-index:10}
+header h1{margin:0;font-size:22px;letter-spacing:.2px}header small{color:#cbd5e1;font-size:12px}
+nav{display:flex;gap:8px;overflow:auto;padding:10px;background:#fff;border-bottom:1px solid var(--border);position:sticky;top:65px;z-index:9}
+nav button{border:0;background:#eef2ff;color:#1e3a8a;padding:10px 14px;border-radius:9px;white-space:nowrap;font-weight:600}
+nav button.active{background:var(--primary);color:#fff}
+main{max-width:1200px;margin:auto;padding:18px}
+.page{display:none}.page.active{display:block}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:18px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;box-shadow:0 2px 8px #00000008}
+.card .label{color:var(--muted);font-size:13px}.card .value{font-size:23px;font-weight:700;margin-top:7px}
+.panel{background:#fff;border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:16px}
+.panel h2{margin:0 0 15px;font-size:18px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}
+label{font-size:13px;font-weight:600;color:#374151;display:block}input,select,textarea{width:100%;margin-top:6px;padding:11px;border:1px solid #d1d5db;border-radius:9px;background:#fff;font-size:14px}textarea{min-height:70px}
+button.primary,.btn{border:0;border-radius:9px;padding:11px 15px;font-weight:700;cursor:pointer}.primary{background:var(--primary);color:#fff}.green{background:var(--green);color:#fff}.red{background:var(--red);color:#fff}.gray{background:#e5e7eb;color:#111827}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:15px}
+.table-wrap{overflow:auto}.table{width:100%;border-collapse:collapse;min-width:760px}.table th,.table td{padding:10px;border-bottom:1px solid var(--border);text-align:left;font-size:13px}.table th{background:#f8fafc}
+.badge{display:inline-block;padding:5px 8px;border-radius:99px;font-size:11px;font-weight:700}.pending{background:#fff7ed;color:#c2410c}.cleared{background:#dcfce7;color:#166534}.returned{background:#fee2e2;color:#991b1b}.activeb{background:#dbeafe;color:#1d4ed8}
+.hidden{display:none!important}.result{margin-top:12px;background:#172033;color:#f8fafc;border:1px solid #d6b45c;padding:16px;border-radius:12px;line-height:1.8;font-size:15px;font-weight:500}.result b{color:#f4cf67;font-weight:800}
+.toast{position:fixed;right:15px;bottom:15px;background:#111827;color:#fff;padding:12px 16px;border-radius:9px;display:none;z-index:99}
+@media(max-width:600px){main{padding:12px}.panel{padding:14px}.cards{grid-template-columns:repeat(2,1fr)}.card .value{font-size:19px}}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style id="modern-dark-gold-theme">
+:root{
+ --sp-bg:#0b1020; --sp-surface:#11182b; --sp-surface2:#172139;
+ --sp-border:#283552; --sp-text:#f4f7fb; --sp-muted:#9ba8bf;
+ --sp-gold:#d9ad55; --sp-gold2:#f0cf7a; --sp-green:#37c98a;
+ --sp-red:#ef6675; --sp-blue:#6f8cff;
+}
+html,body{background:var(--sp-bg)!important;color:var(--sp-text)!important;}
+body{
+ font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif!important;
+}
+header,.topbar,.app-header,.navbar{
+ background:rgba(17,24,43,.96)!important;
+ color:var(--sp-text)!important;
+ border-bottom:1px solid var(--sp-border)!important;
+ box-shadow:0 8px 30px rgba(0,0,0,.25)!important;
+}
+.card,.stat-card,.summary-card,.panel,.box,.modal-box{
+ background:linear-gradient(145deg,var(--sp-surface),#0f1729)!important;
+ color:var(--sp-text)!important;
+ border:1px solid var(--sp-border)!important;
+ border-radius:18px!important;
+ box-shadow:0 12px 35px rgba(0,0,0,.25)!important;
+}
+.card:hover,.stat-card:hover,.summary-card:hover{
+ border-color:rgba(217,173,85,.55)!important;
+ transform:translateY(-2px);
+ transition:.2s ease;
+}
+h1,h2,h3,h4,strong{color:var(--sp-text)!important;}
+p,label,.muted,.subtext,.sp-muted{color:var(--sp-muted)!important;}
+button,.btn{
+ background:linear-gradient(135deg,var(--sp-gold),var(--sp-gold2))!important;
+ color:#17130a!important;
+ border:0!important;
+ border-radius:10px!important;
+ font-weight:800!important;
+ box-shadow:0 5px 18px rgba(217,173,85,.16)!important;
+}
+button:hover,.btn:hover{filter:brightness(1.07);transform:translateY(-1px);}
+input,select,textarea{
+ background:#0c1425!important;color:var(--sp-text)!important;
+ border:1px solid var(--sp-border)!important;border-radius:10px!important;
+}
+input::placeholder,textarea::placeholder{color:#65738b!important;}
+table{background:transparent!important;}
+th{
+ background:#19233a!important;color:var(--sp-gold2)!important;
+ border-color:var(--sp-border)!important;
+}
+td{color:#e7ecf5!important;border-color:var(--sp-border)!important;}
+tr:hover td{background:#141e33!important;}
+.modal{background:rgba(0,0,0,.72)!important;backdrop-filter:blur(7px);}
+.modal-box{background:#10182b!important;}
+.badge,.pill,.status{
+ background:#1c2942!important;color:var(--sp-gold2)!important;
+ border:1px solid #344563!important;border-radius:999px!important;
+}
+.sp-side{
+ position:fixed;left:0;top:0;bottom:0;width:238px;
+ background:#0d1425;border-right:1px solid var(--sp-border);
+ padding:24px 14px;z-index:50;
+}
+.sp-brand{font-size:21px;font-weight:900;letter-spacing:.04em;color:var(--sp-gold2);}
+.sp-brand small{display:block;color:var(--sp-muted);font-size:11px;font-weight:600;margin-top:4px;}
+.sp-nav{margin-top:28px;display:grid;gap:7px;}
+.sp-nav a{
+ display:block;padding:11px 13px;border-radius:10px;color:#aab6ca!important;
+ text-decoration:none;font-weight:700;font-size:13px;
+}
+.sp-nav a:hover,.sp-nav a.active{background:#18233a;color:var(--sp-gold2)!important;}
+.sp-main{margin-left:0;padding:26px;min-height:100vh;}
+.sp-top{
+ display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:22px;
+}
+.sp-kicker{font-size:11px;text-transform:uppercase;letter-spacing:.13em;color:var(--sp-gold);}
+.sp-title{font-size:28px;font-weight:900;margin:4px 0;}
+.sp-date{color:var(--sp-muted);font-size:13px;}
+.sp-kpis{
+ display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:13px;margin-bottom:18px;
+}
+.sp-kpi{
+ padding:17px;border:1px solid var(--sp-border);border-radius:16px;
+ background:linear-gradient(145deg,#141e34,#0f1729);
+}
+.sp-kpi-label{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--sp-muted);}
+.sp-kpi-value{font-size:24px;font-weight:900;color:var(--sp-text);margin-top:7px;}
+.sp-kpi.gold .sp-kpi-value{color:var(--sp-gold2);}
+.sp-grid2{display:grid;grid-template-columns:1.35fr .65fr;gap:16px;}
+.sp-section{padding:18px;border-radius:18px;border:1px solid var(--sp-border);background:var(--sp-surface);}
+.sp-section-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:13px;}
+.sp-section-head h3{margin:0;font-size:15px;}
+.sp-mini{font-size:11px;color:var(--sp-muted);}
+@media(max-width:1050px){.sp-kpis{grid-template-columns:repeat(2,minmax(0,1fr));}.sp-grid2{grid-template-columns:1fr;}}
+@media(max-width:760px){
+ .sp-side{position:relative;width:auto;height:auto;border-right:0;border-bottom:1px solid var(--sp-border);padding:15px;}
+ .sp-nav{display:flex;overflow:auto;margin-top:14px;}
+ .sp-nav a{white-space:nowrap;}
+ .sp-main{margin-left:0;padding:16px;}
+ .sp-top{align-items:flex-start;flex-direction:column;}
+}
+</style>
+
+
+<style id="sp-print-buttons">
+.sp-print-btn{
+  width:34px!important;height:34px!important;min-width:34px!important;
+  padding:0!important;border-radius:9px!important;
+  display:inline-flex!important;align-items:center!important;justify-content:center!important;
+  font-size:17px!important;line-height:1!important;
+  background:#1b263e!important;color:#f0cf7a!important;
+  border:1px solid #394967!important;box-shadow:none!important;
+}
+.sp-print-btn:hover{background:#263553!important;color:#fff!important;transform:none!important;}
+.sp-head-actions{display:flex;align-items:center;gap:7px;}
+@media print{
+ body{background:#fff!important;color:#111!important;}
+ body *{visibility:hidden!important;}
+ .sp-print-area,.sp-print-area *,.sp-active-print,.sp-active-print *{visibility:visible!important;}
+ .sp-print-area{position:absolute!important;left:0!important;top:0!important;width:100%!important;
+   background:#fff!important;color:#111!important;padding:15px!important;}
+ .sp-print-area .card,.sp-print-area .panel{background:#fff!important;color:#111!important;
+   border:1px solid #ccc!important;box-shadow:none!important;}
+ .sp-print-area h1,.sp-print-area h2,.sp-print-area h3,.sp-print-area strong,
+ .sp-print-area .value,.sp-print-area .label,.sp-print-area td{color:#111!important;}
+ .sp-print-area th{background:#eee!important;color:#111!important;}
+ .sp-print-area .sp-print-btn{display:none!important;}
+}
+</style>
+
+</head>
+<body>
+
+<main class="sp-main" id="spModernMain">
+<header><h1>💰 Sweet Park</h1><small>Finance & Collection Management</small></header>
+<nav>
+<button class="active" onclick="showPage('dashboard',this)">Dashboard</button>
+<button onclick="showPage('customers',this)">Customers</button>
+<button onclick="showPage('daily',this)">Daily Collection</button>
+<button onclick="showPage('speed',this)">Speed / Cheques</button>
+<button onclick="showPage('speedDay',this)">Speed Day</button>
+<button onclick="showPage('collections',this)">Collections</button><button onclick="showPage('loanSummary',this)">Loan Summary</button>
+</nav>
+
+<main>
+<section id="dashboard" class="page active">
+<div class="panel" style="margin-bottom:16px">
+<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+<div><h2 style="margin:0">Database Connection</h2><small id="dbStatus">Connecting...</small></div>
+<button class="btn gray" onclick="testDatabase()">Test Connection</button>
+</div></div>
+<div class="cards">
+<div class="card"><div class="label">Customers</div><div class="value" id="dCustomers">0</div></div>
+<div class="card"><div class="label">Capital + Interest</div><div class="value" id="dGrossPayable">Rs. 0</div></div>
+<div class="card" onclick="openTotalCollection()" style="cursor:pointer"><div class="label">Total Collection <span style="font-size:12px">(Click)</span></div><div class="value" id="dCashCollected">Rs. 0</div></div>
+<div class="card"><div class="label">Balance</div><div class="value" id="dBalance">Rs. 0</div></div>
+<div class="card" onclick="openTodayCollection()" style="cursor:pointer"><div class="label">Today's Collection <span style="font-size:12px">(Click)</span></div><div class="value" id="dTodayCollected">Rs. 0</div></div>
+<div class="card"><div class="label">Pending Cheques</div><div class="value" id="dCheques">0</div></div>
+<div class="card"><div class="label">Today's Due</div><div class="value" id="dToday">Rs. 0</div></div>
+</div>
+<div class="actions" style="margin:0 0 18px;">
+  <button class="primary" onclick="openDashboardDetails()">📊 View Full Details</button>
+</div>
+<div class="panel"><h2>Quick Actions</h2><div class="actions">
+<button class="primary" onclick="showPage('customers')">+ Add Customer</button>
+<button class="green" onclick="showPage('daily')">+ Daily Loan</button>
+<button class="primary" onclick="showPage('speed')">+ Speed Loan / Cheque</button>
+<button class="primary" onclick="showPage('speedDay')">+ Speed Day</button>
+</div></div>
+<div class="panel"><h2>Upcoming / Pending Cheques</h2><div id="dashboardCheques"></div></div>
+</section>
+
+<section id="customers" class="page">
+<div class="panel"><h2>Add Customer</h2>
+<form id="customerForm">
+<div class="grid">
+<label>Name<input id="cName" required></label>
+<label>Phone<input id="cPhone" required></label>
+<label>NIC<input id="cNic"></label>
+<label>Address<input id="cAddress"></label>
+</div>
+<div class="actions"><button class="primary">Save Customer</button></div>
+</form></div>
+<div class="panel"><div class="sp-section-head"><h2>Customer List</h2><button class="sp-print-btn" title="Print customer list" onclick="printDetails('customers')">🖨️</button></div><div class="table-wrap"><table class="table"><thead><tr><th>Name</th><th>Phone</th><th>NIC</th><th>Address</th><th>Loans</th><th>Action</th></tr></thead><tbody id="customerTable"></tbody></table></div></div>
+</section>
+
+<section id="daily" class="page">
+<div class="panel"><h2>Daily Collection Loan</h2>
+<form id="dailyForm">
+<div class="grid">
+<label>Customer<select id="dailyCustomer" required></select></label>
+<label>Capital Amount<input id="dailyCapital" type="number" min="0" step="0.01" required></label>
+<label>Interest % / Month<input id="dailyInterest" type="number" min="0" step="0.01" value="10" required></label>
+<label>Plan Days<input id="dailyDays" type="number" min="1" value="60" required></label>
+<label>Start Date<input id="dailyStart" type="date" required></label>
+</div>
+<div id="dailyCalc" class="result">Enter details to calculate.</div>
+<div class="actions"><button class="primary">Create Daily Loan</button></div>
+</form></div>
+<div class="panel"><div class="sp-section-head"><h2>Daily Loans</h2><button class="sp-print-btn" title="Print daily loans" onclick="printDetails('daily')">🖨️</button></div><div class="table-wrap"><table class="table"><thead><tr><th>Created Date</th><th>Customer</th><th>Capital</th><th>Interest</th><th>Total</th><th>Daily</th><th>Paid</th><th>Balance</th><th>Status</th><th>Action</th></tr></thead><tbody id="dailyTable"></tbody></table></div></div>
+</section>
+
+<section id="speed" class="page">
+<div class="panel"><h2>Speed / Cheque Loan</h2>
+<form id="speedForm">
+<div class="grid">
+<label>Customer<select id="speedCustomer" required></select></label>
+<label>Cash Given<input id="speedCapital" type="number" min="0" step="0.01" required></label>
+<label>Rate per Rs.100,000 / Day<input id="speedRate" type="number" min="0" step="0.01" value="2000" required></label>
+<label>Cheque Days<input id="speedDays" type="number" min="1" value="10" required></label>
+<label>Cheque Number<input id="speedCheque"></label>
+<label>Bank<input id="speedBank"></label>
+<label>Cash Date<input id="speedCashDate" type="date" required></label>
+</div>
+<div id="speedCalc" class="result">Enter details to calculate.</div>
+<div class="actions"><button class="primary">Create Speed Loan</button></div>
+</form></div>
+<div class="panel"><div class="sp-section-head"><h2>Speed / Cheque Loans</h2><button class="sp-print-btn" title="Print speed loans" onclick="printDetails('speed')">🖨️</button></div><div class="table-wrap"><table class="table"><thead><tr><th>Created Date</th><th>Customer</th><th>Capital</th><th>Interest</th><th>Cheque Amount</th><th>Cheque Date</th><th>Cheque No</th><th>Bank</th><th>Status</th><th>Action</th></tr></thead><tbody id="speedTable"></tbody></table></div></div>
+</section>
+
+<section id="speedDay" class="page">
+<div class="panel"><h2>Speed Day Loan</h2>
+<form id="speedDayForm">
+<div class="grid">
+<label>Customer<select id="speedDayCustomer" required></select></label>
+<label>Cash Given<input id="speedDayCapital" type="number" min="0" step="0.01" required></label>
+<label>Per Day / Rs.100,000<input id="speedDayRate" type="number" min="0" step="0.01" value="1000" required></label>
+<label>Starting Date<input id="speedDayStart" type="date" required></label>
+</div>
+<div id="speedDayCalc" class="result">Enter details to calculate.</div>
+<div class="actions"><button class="primary">Create Speed Day Loan</button></div>
+</form></div>
+<div class="panel"><div class="sp-section-head"><h2>Speed Day Loans</h2><button class="sp-print-btn" title="Print speed day loans" onclick="printDetails('speedDay')">🖨️</button></div>
+<div class="table-wrap"><table class="table"><thead><tr><th>Start Date</th><th>Customer</th><th>Capital</th><th>Daily Rate</th><th>Days</th><th>Interest</th><th>Total Outstanding</th><th>Paid</th><th>Outstanding</th><th>Status</th><th>Action</th></tr></thead>
+<tbody id="speedDayTable"></tbody></table></div></div>
+</section>
+
+
+<section id="loanSummary" class="page">
+<div class="panel"><h2>Loan Summary</h2>
+<div class="grid">
+<label>Category<select id="summaryType"><option value="all">All Loans</option><option value="daily">Daily Collection</option><option value="speed">Speed / Cheque</option><option value="speedDay">Speed Day</option></select></label>
+<label>Customer<select id="summaryCustomer"><option value="all">All Customers</option></select></label>
+<label>Status<select id="summaryStatus"><option value="all">All Status</option><option>Active</option><option>Pending</option><option>Completed</option><option>Cleared</option><option>Returned</option><option>Closed - Waived</option></select></label>
+<label>Search<input id="summarySearch" placeholder="Customer name / Loan ID"></label>
+</div>
+<div class="actions"><button class="primary" onclick="renderLoanSummary()">Filter</button><button class="gray" onclick="resetLoanSummary()">Reset</button><button class="green" onclick="showCustomerFullSummary()">Customer-wise Full Summary</button><button class="gray" onclick="downloadCustomerFullSummary()">Download CSV</button></div>
+</div>
+<div class="panel"><div class="sp-section-head"><h2 style="margin:0">Loan Summary Results</h2><button class="sp-print-btn" title="Print loan summary" onclick="printDetails('loanSummary')">🖨️</button></div><div id="summaryCards" class="cards"></div>
+<div class="table-wrap"><table class="table"><thead><tr><th>Date</th><th>Customer</th><th>Category</th><th>Capital</th><th>Interest</th><th>Total</th><th>Paid</th><th>Outstanding</th><th>Status</th><th>Modify</th></tr></thead>
+<tbody id="loanSummaryTable"></tbody></table></div></div>
+</section>
+
+<section id="collections" class="page">
+<div class="panel"><h2>Record Collection</h2>
+<form id="collectionForm">
+<div class="grid">
+<label>Loan Type<select id="colType"><option value="daily">Daily Collection</option><option value="speed">Speed / Cheque</option><option value="speedDay">Speed Day</option></select></label>
+<label>Loan ID<select id="colLoan" required></select></label>
+<label id="colAmountWrap">Amount<input id="colAmount" type="number" min="0" step="0.01" required></label>
+<label>Payment Option<select id="colMode"><option value="normal">Normal Collection</option><option value="capitalOnly">Pay Full Capital Only (Stop New Interest)</option><option value="interestDiscount">Speed Day Interest Discount (Days)</option></select></label>
+<label id="discountDaysWrap" class="hidden">Discount Days Only<input id="discountDays" type="number" min="1" step="1" value="1"></label>
+<label id="colDateWrap">Date<input id="colDate" type="date" required></label>
+<div id="discountPreview" class="result hidden" style="grid-column:1/-1"></div>
+</div>
+<div class="actions"><button class="green">Save Collection</button></div>
+</form></div>
+<div class="panel"><div class="sp-section-head"><h2>Collection History</h2><button class="sp-print-btn" title="Print collection history" onclick="printDetails('collectionTable')">🖨️</button></div>
+<div class="grid" style="margin-bottom:12px"><label>Collection Date<input id="collectionFilterDate" type="date" onchange="renderCollectionHistory()"></label><div class="actions" style="align-items:end"><button type="button" class="gray" onclick="clearCollectionDateFilter()">All Dates</button></div></div>
+<div class="table-wrap"><table class="table"><thead><tr><th>Date</th><th>Customer</th><th>Type</th><th>Amount</th><th>Action</th></tr></thead><tbody id="collectionTable"></tbody></table></div></div>
+</section>
+</main>
+<div id="dashboardDetailsModal" class="hidden" style="position:fixed;inset:0;background:#0008;z-index:101;padding:20px;overflow:auto">
+<div class="panel" style="max-width:1100px;margin:30px auto">
+<div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
+<div class="sp-head-actions"><h2 style="margin:0">Dashboard - Full Details</h2><button class="sp-print-btn" title="Print details" aria-label="Print details" onclick="printDetails('dashboardDetails')">🖨️</button></div>
+<button class="btn gray" onclick="closeDashboardDetails()">Close</button>
+</div>
+<div id="dashboardDetails" class="sp-print-area"></div>
+</div></div>
+<div id="totalCollectionModal" class="hidden" style="position:fixed;inset:0;background:#0008;z-index:103;padding:20px;overflow:auto">
+<div class="panel" style="max-width:1000px;margin:30px auto">
+<div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
+<div class="sp-head-actions"><h2 style="margin:0">Total Collection - Full Details</h2><button class="sp-print-btn" title="Print collection details" aria-label="Print collection details" onclick="printDetails('totalCollectionDetails')">🖨️</button></div>
+<button class="btn gray" onclick="closeTotalCollection()">Close</button>
+</div>
+<div id="totalCollectionDetails" class="sp-print-area"></div>
+</div></div>
+<div id="customerModal" class="hidden" style="position:fixed;inset:0;background:#0008;z-index:100;padding:20px;overflow:auto">
+<div class="panel" style="max-width:1000px;margin:30px auto">
+<div style="display:flex;justify-content:space-between;align-items:center"><div class="sp-head-actions"><h2 id="modalCustomerName">Customer Details</h2><button class="sp-print-btn" title="Print customer details" aria-label="Print customer details" onclick="printDetails('customerDetails')">🖨️</button></div><button class="btn gray" onclick="closeCustomerDetails()">Close</button></div>
+<div id="customerDetails" class="sp-print-area"></div>
+</div></div>
+
+<div id="editLoanModal" class="hidden" style="position:fixed;inset:0;background:#0008;z-index:102;padding:20px;overflow:auto">
+<div class="panel" style="max-width:800px;margin:30px auto">
+<div style="display:flex;justify-content:space-between;align-items:center"><h2 id="editLoanTitle">Modify Loan</h2><button class="btn gray" onclick="closeEditLoan()">Close</button></div>
+<form id="editLoanForm"><input type="hidden" id="editLoanId"><input type="hidden" id="editLoanType"><div id="editLoanFields"></div>
+<div class="actions"><button class="green">Save Changes</button><button type="button" class="gray" onclick="closeEditLoan()">Cancel</button></div></form>
+</div></div>
+<div id="toast" class="toast"></div>
+
+<script>
+
+const SUPABASE_URL='https://gdkfxcynuikfddqwldzi.supabase.co';
+const SUPABASE_KEY='sb_publishable_H0SU-vUH-_5xzPnu3Yf-TQ_JD0mGyLf';
+const supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+
+function setDbStatus(t,ok=false){
+ const e=document.getElementById('dbStatus');
+ if(e){e.textContent=t;e.style.color=ok?'#16a34a':'#dc2626';}
+}
+async function testDatabase(){
+ setDbStatus('Connecting...');
+ try{
+  const {error}=await supabaseClient.from('customers').select('id',{head:true,count:'exact'});
+  if(error) throw error;
+  setDbStatus('Connected ✓',true);
+ }catch(e){setDbStatus('Connection error: '+(e.message||'Check Supabase tables/policies'));}
+}
+function dbErr(e){
+ const msg=(e&&((e.message||'')+' '+(e.details||'')+' '+(e.hint||''))).replace(/\s+/g,' ').trim();
+ return msg||'Unknown Supabase error';
+}
+let lastDbError='';
+async function syncRecord(kind,x,mode="upsert"){
+ try{
+  let table,payload;
+  if(kind==='customer'){
+   table='customers'; payload={id:x.id,name:x.name,phone:x.phone||null,nic:x.nic||null,address:x.address||null};
+  }else if(kind==='daily'){
+   table='daily_loans'; payload={id:x.id,customer_id:x.customerId,capital:x.capital,interest_rate:x.interestPct,interest:x.interest,total:x.total,plan_days:x.days,start_date:x.start||null,original_capital:x.originalCapital,original_plan_days:x.originalPlanDays,base_interest:x.baseInterest,extension_count:x.extensionCount,created_date:x.createdDate||x.start||null,status:x.status||'Active'};
+  }else if(kind==='speed'){
+   table='speed_loans'; payload={id:x.id,customer_id:x.customerId,capital:x.capital,rate:x.rate,interest:x.interest,total:x.total,cheque_days:x.days,cheque_no:x.chequeNo||null,bank:x.bank||null,cheque_date:x.chequeDate||null,cash_date:x.cashDate||null,created_date:x.createdDate||x.cashDate||null,status:x.status||'Pending'};
+  }else if(kind==='speedDay'){
+   table='speed_loans'; payload={id:x.id,customer_id:x.customerId,capital:x.capital,rate:x.rate,interest:x.interest,total:x.total,cheque_days:1,cheque_no:'SPEED_DAY',bank:null,cheque_date:x.startDate||null,cash_date:x.startDate||null,created_date:x.createdDate||x.startDate||null,status:x.status||'Active'};
+  }else if(kind==='collection'){
+   table='collections';
+   // Store Speed Day as normal 'speed' in the DB for compatibility with an existing loan_type constraint.
+   payload={id:x.id,customer_id:x.customerId,loan_id:x.loanId,loan_type:x.type==='speedDay'?'speed':x.type,amount:x.amount,collection_date:x.date||null};
+  }else return false;
+  // Some existing Supabase tables may not have all optional/legacy columns.
+  // Retry automatically after removing a column reported as missing by PostgREST.
+  let data={...payload};
+  for(let attempt=0;attempt<12;attempt++){
+   let r=(mode==='update' && x.id)
+     ? await supabaseClient.from(table).update(data).eq('id',x.id).select('id')
+     : await supabaseClient.from(table).upsert(data,{onConflict:'id'});
+   if(!r.error){lastDbError='';return true;}
+   const msg=dbErr(r.error);
+   const m=msg.match(/Could not find the '([^']+)' column of '[^']+' in the schema cache/i)
+         || msg.match(/column [\"']?([a-zA-Z_][a-zA-Z0-9_]*)[\"']? does not exist/i);
+   if(m && Object.prototype.hasOwnProperty.call(data,m[1])){
+    delete data[m[1]];
+    continue;
+   }
+   throw r.error;
+  }
+  throw new Error('Too many missing-column retries');
+ }catch(e){
+  lastDbError=dbErr(e); setDbStatus('DB error: '+lastDbError);
+  console.error('Database error:',e);
+  return false;
+ }
+}
+async function syncToDatabase(){
+ try{
+  for(const c of db.customers){if(!(await syncRecord('customer',c)))throw new Error(lastDbError);}
+  for(const x of db.daily){if(!(await syncRecord('daily',x)))throw new Error(lastDbError);}
+  for(const x of db.speed){if(!(await syncRecord('speed',x)))throw new Error(lastDbError);}
+  for(const x of db.speedDay){if(!(await syncRecord('speedDay',x)))throw new Error(lastDbError);}
+  for(const x of db.collections){if(!(await syncRecord('collection',x)))throw new Error(lastDbError);}
+  setDbStatus('Connected • Data synced ✓',true); return true;
+ }catch(e){
+  lastDbError=dbErr(e); setDbStatus('Sync error: '+lastDbError); console.error('Database sync error:',e); return false;
+ }
+}
+const KEY='moneyInterestManager_v1';
+// LocalStorage is no longer used. Any old local data is cleared once.
+try{localStorage.removeItem(KEY);}catch(e){}
+let db={customers:[],daily:[],speed:[],speedDay:[],collections:[],corrections:[]};
+const money=n=>'Rs. '+Number(n||0).toLocaleString('en-LK',{minimumFractionDigits:2,maximumFractionDigits:2});
+const today=()=>{const d=new Date();const y=d.getFullYear();const m=String(d.getMonth()+1).padStart(2,'0');const day=String(d.getDate()).padStart(2,'0');return `${y}-${m}-${day}`;};
+document.getElementById('dailyStart').value=today();document.getElementById('speedCashDate').value=today();document.getElementById('colDate').value=today();
+
+async function save(){
+  applyAutoThreeMonthInterest();
+  render();
+  if(typeof syncToDatabase==='function') return await syncToDatabase();
+  return false;
+}
+function toast(t){let x=document.getElementById('toast');x.textContent=t;x.style.display='block';setTimeout(()=>x.style.display='none',1800)}
+function showPage(id,btn){
+ document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));document.getElementById(id).classList.add('active');
+ document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active'));if(btn)btn.classList.add('active');render();
+}
+function customerName(id){return db.customers.find(x=>x.id===id)?.name||'Unknown'}
+
+function editCustomer(id){
+ const c=db.customers.find(x=>x.id===id); if(!c)return;
+ const name=prompt('Customer Name',c.name); if(name===null)return;
+ const phone=prompt('Phone',c.phone||''); if(phone===null)return;
+ const nic=prompt('NIC',c.nic||''); if(nic===null)return;
+ const address=prompt('Address',c.address||''); if(address===null)return;
+ c.name=name.trim();c.phone=phone.trim();c.nic=nic.trim();c.address=address.trim();
+ save().then(ok=>{render(); if(ok) toast('Customer modified ✓'); else toast('Customer modify failed: '+lastDbError);});
+}
+
+function options(id){
+ let s=document.getElementById(id);s.innerHTML='<option value="">Select customer</option>'+db.customers.map(c=>`<option value="${c.id}">${esc(c.name)} - ${esc(c.phone)}</option>`).join('');
+}
+function esc(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
+function addDays(date,days){let d=new Date(date+'T00:00:00');d.setDate(d.getDate()+Number(days));return d.toISOString().slice(0,10)}
+
+document.getElementById('customerForm').onsubmit=async e=>{
+ e.preventDefault();
+ const customer={id:crypto.randomUUID(),name:cName.value.trim(),phone:cPhone.value.trim(),nic:cNic.value.trim(),address:cAddress.value.trim()};
+ if(!customer.name){toast('Enter customer name');return;}
+ const ok=await syncRecord('customer',customer);
+ if(!ok){toast('Customer NOT saved: '+lastDbError);return;}
+ db.customers.push(customer);
+ e.target.reset();render();toast('Customer saved ✓');
+};
+
+function calcDaily(){
+ let cap=+dailyCapital.value||0, pct=+dailyInterest.value||0, days=+dailyDays.value||0;
+ let months=days/30, interest=cap*pct/100*months,total=cap+interest,daily=days?total/days:0;
+ dailyCalc.innerHTML=`Capital: <b>${money(cap)}</b> &nbsp; Monthly Interest: <b>${pct}%</b> &nbsp; Plan: <b>${months} month(s) / ${days} days</b> &nbsp; Total Interest: <b>${money(interest)}</b> &nbsp; Total Payable: <b>${money(total)}</b> &nbsp; Daily Collection: <b>${money(daily)}</b>`;
+ return {cap,pct,days,interest,total,daily};
+}
+['dailyCapital','dailyInterest','dailyDays'].forEach(id=>document.getElementById(id).oninput=calcDaily);
+document.getElementById('dailyForm').onsubmit=async e=>{
+ e.preventDefault();if(!dailyCustomer.value)return;
+ const selectedStart=(dailyStart.value||'').trim();
+ if(!selectedStart){toast('Select a start date');return;}
+ let x=calcDaily();
+ const loan={id:crypto.randomUUID(),createdDate:today(),customerId:dailyCustomer.value,
+  capital:x.cap,originalCapital:x.cap,interestPct:x.pct,days:x.days,planDays:x.days,
+  originalPlanDays:x.days,basePlanDays:x.days,months:x.days/30,interest:x.interest,
+  baseInterest:x.interest,total:x.total,daily:x.daily,start:dailyStart.value,paid:0,
+  outstanding:x.total,status:'Active',autoExtended:false,extensionCount:0};
+ db.daily.push(loan);
+ render();
+ const ok=await syncRecord('daily',loan);
+ if(!ok){
+   db.daily=db.daily.filter(x=>x.id!==loan.id);
+   render();
+   toast('Daily loan NOT saved: '+lastDbError);
+   return;
+ }
+ e.target.reset();dailyStart.value=today();render();toast('Daily loan saved ✓');
+};
+
+function calcSpeed(){
+ let cap=+speedCapital.value||0,rate=+speedRate.value||0,days=+speedDays.value||0;
+ let dailyInterest=cap/100000*rate,interest=dailyInterest*days,total=cap+interest,chequeDate=speedCashDate.value?addDays(speedCashDate.value,days):'';
+ speedCalc.innerHTML=`Daily interest: <b>${money(dailyInterest)}</b> &nbsp; Total interest: <b>${money(interest)}</b> &nbsp; Cheque amount: <b>${money(total)}</b> &nbsp; Cheque date: <b>${chequeDate||'-'}</b>`;
+ return {cap,rate,days,dailyInterest,interest,total,chequeDate};
+}
+['speedCapital','speedRate','speedDays','speedCashDate'].forEach(id=>document.getElementById(id).oninput=calcSpeed);
+document.getElementById('speedForm').onsubmit=async e=>{
+ e.preventDefault();if(!speedCustomer.value)return;
+ let x=calcSpeed();
+ const loan={id:crypto.randomUUID(),createdDate:today(),customerId:speedCustomer.value,capital:x.cap,rate:x.rate,days:x.days,interest:x.interest,total:x.total,dailyInterest:x.dailyInterest,chequeDate:x.chequeDate,chequeNo:speedCheque.value,bank:speedBank.value,cashDate:speedCashDate.value,status:'Pending'};
+ const ok=await syncRecord('speed',loan);
+ if(!ok){toast('Speed loan NOT saved: '+lastDbError);return;}
+ db.speed.push(loan);e.target.reset();speedCashDate.value=today();render();toast('Speed loan saved ✓');
+};
+
+function calcSpeedDay(){
+  let cap=+speedDayCapital.value||0,rate=+speedDayRate.value||0,start=speedDayStart.value;
+  let days=start?Math.max(0,loanAgeDays(start)):0;
+  let dailyInterest=cap/100000*rate;
+  let interest=dailyInterest*days,total=cap+interest;
+  speedDayCalc.innerHTML=`Daily interest: <b>${money(dailyInterest)}</b> &nbsp; Days counted: <b>${days}</b> &nbsp; Interest to date: <b>${money(interest)}</b> &nbsp; Outstanding before payments: <b>${money(total)}</b>`;
+  return {cap,rate,days,dailyInterest,interest,total};
+}
+['speedDayCapital','speedDayRate','speedDayStart'].forEach(id=>document.getElementById(id).oninput=calcSpeedDay);
+
+document.getElementById('speedDayForm').onsubmit=async e=>{
+  e.preventDefault(); if(!speedDayCustomer.value)return;
+  let x=calcSpeedDay();
+  const loan={id:crypto.randomUUID(),createdDate:today(),customerId:speedDayCustomer.value,capital:x.cap,rate:x.rate,
+    interest:x.interest,total:x.total,dailyInterest:x.dailyInterest,startDate:speedDayStart.value,paid:0,
+    outstanding:x.total,status:'Active'};
+  db.speedDay.push(loan);
+  render();
+  const ok=await syncRecord('speedDay',loan);
+  if(!ok){
+    db.speedDay=db.speedDay.filter(a=>a.id!==loan.id);
+    render(); toast('Speed Day NOT saved: '+lastDbError); return;
+  }
+  e.target.reset(); speedDayStart.value=today(); render(); toast('Speed Day loan saved ✓');
+};
+
+const colMode=document.getElementById('colMode');
+const discountDaysWrap=document.getElementById('discountDaysWrap');
+const colAmountWrap=document.getElementById('colAmountWrap');
+const colDateWrap=document.getElementById('colDateWrap');
+const discountPreview=document.getElementById('discountPreview');
+function updateDiscountPreview(){
+ const isDiscount=colMode.value==='interestDiscount';
+ discountDaysWrap.classList.toggle('hidden',!isDiscount);
+ colAmountWrap.classList.toggle('hidden',isDiscount);
+ colDateWrap.classList.toggle('hidden',isDiscount);
+ discountPreview.classList.toggle('hidden',!isDiscount);
+ document.getElementById('colAmount').required=!isDiscount;
+ document.getElementById('colDate').required=!isDiscount;
+ if(!isDiscount){discountPreview.innerHTML='';return;}
+ const loan=(db.speedDay||[]).find(x=>x.id===colLoan.value);
+ if(colType.value!=='speedDay'){
+   discountPreview.innerHTML='<b>Choose a Speed Day loan.</b> Interest discount is available only for Speed Day loans.';
+   return;
+ }
+ if(!loan){discountPreview.innerHTML='Select a Speed Day loan to calculate the discount.';return;}
+ const days=Math.max(1,Number(document.getElementById('discountDays').value)||1);
+ const perDay=Number(loan.dailyInterest)||((Number(loan.capital)||0)/100000*(Number(loan.rate)||0));
+ const currentInterest=Number(loan.interest)||0;
+ const discount=Math.min(currentInterest,perDay*days);
+ discountPreview.innerHTML=`<div style="display:grid;gap:8px"><div>Per-day interest <b style="float:right">${money(perDay)}</b></div><div>Discount days <b style="float:right">${days} day(s)</b></div><div>Calculated discount <b style="float:right">${money(discount)}</b></div><div style="border-top:1px solid #64748b;padding-top:8px">Interest after discount <b style="float:right">${money(Math.max(0,currentInterest-discount))}</b></div></div>`;
+}
+colMode.onchange=updateDiscountPreview;
+document.getElementById('discountDays').oninput=updateDiscountPreview;
+colType.addEventListener('change',updateDiscountPreview);
+colLoan.addEventListener('change',updateDiscountPreview);
+document.getElementById('collectionForm').onsubmit=async e=>{
+ e.preventDefault();
+ let type=colType.value,loan=db[type].find(x=>x.id===colLoan.value);if(!loan)return;
+ const mode=colMode.value;
+ const originalLoanState={interest:loan.interest,total:loan.total,paid:loan.paid,outstanding:loan.outstanding,status:loan.status};
+ if(mode==='interestDiscount'){
+   if(type!=='speedDay'){toast('Select Speed Day loan to discount interest');return;}
+   const days=Math.max(1,Number(document.getElementById('discountDays').value)||0);
+   const old=originalLoanState;
+   const discount=Math.min(Number(loan.interest)||0,(Number(loan.dailyInterest)||0)*days);
+   loan.interest=Math.max(0,Number(loan.interest||0)-discount);
+   loan.total=Number(loan.capital||0)+loan.interest;
+   const paid=db.collections.filter(c=>c.loanId===loan.id).reduce((sum,c)=>sum+Number(c.amount||0),0);
+   loan.paid=paid;loan.outstanding=Math.max(0,loan.total-paid);
+   if(loan.outstanding===0)loan.status='Completed';
+   const ok=await syncRecord('speedDay',loan,'update');
+   if(!ok){Object.assign(loan,old);render();toast('Discount not saved: '+lastDbError);return;}
+   render();toast(`${days} day(s) interest discount applied: ${money(discount)}`);
+   document.getElementById('discountDays').value=1;
+   updateCollectionLoans();updateDiscountPreview();
+   return;
+ }
+ let amount=+colAmount.value||0;
+ if(amount<=0){toast('Enter a valid collection amount');return;}
+ const collection={id:crypto.randomUUID(),loanId:loan.id,type,customerId:loan.customerId,amount,date:colDate.value};
+ const oldLoan=originalLoanState;
+ const oldPaid=Number(loan.paid||0), oldOutstanding=Number(loan.outstanding ?? loan.total), oldStatus=loan.status;
+ // Capital-only means the customer is paying the full capital, not waiving the existing interest.
+ // Keep original total/interest so the already accrued interest remains outstanding.
+ if(mode==='capitalOnly'){
+   const priorPaid=db.collections.filter(c=>c.loanId===loan.id).reduce((sum,c)=>sum+Number(c.amount||0),0);
+   if(amount < Math.max(0,Number(loan.capital||0)-priorPaid)){
+     toast('Enter the full remaining capital amount to stop future interest');return;
+   }
+   loan.status='Capital Paid - Interest Frozen';
+ }
+ db.collections.push(collection);
+ if(type==='daily' || type==='speedDay'){
+   loan.paid=oldPaid+amount;
+   loan.outstanding=Math.max(0,loan.total-loan.paid);
+   if(loan.paid>=loan.total)loan.status='Completed';
+ } else if(amount>=loan.total){loan.status='Cleared';}
+ render();
+ const loanKind=type==='speedDay'?'speedDay':type;
+ const loanOk=mode==='capitalOnly'?await syncRecord(loanKind,loan,'update'):true;
+ const collectionOk=loanOk?await syncRecord('collection',collection):false;
+ if(!collectionOk){
+   db.collections=db.collections.filter(c=>c.id!==collection.id);
+   Object.assign(loan,oldLoan);loan.paid=oldPaid;loan.outstanding=oldOutstanding;loan.status=oldStatus;
+   render();
+   toast('Collection NOT saved: '+lastDbError);
+   return;
+ }
+ e.target.reset();colDate.value=today();discountDaysWrap.classList.add('hidden');updateCollectionLoans();render();
+ toast(mode==='capitalOnly'?'Full capital recorded; existing interest remains and new daily interest stops ✓':'Collection saved ✓');
+};
+colType.onchange=()=>{updateCollectionLoans();updateDiscountPreview();};
+function updateCollectionLoans(){
+ let type=colType.value;colLoan.innerHTML=db[type].map(x=>`<option value="${x.id}">${esc(customerName(x.customerId))} - ${money(x.total)} (${x.status})</option>`).join('');
+ updateDiscountPreview();
+}
+
+
+function loanAgeDays(start){
+  if(!start) return 0;
+  const s=new Date(start+'T00:00:00');
+  const n=new Date(today()+'T00:00:00');
+  return Math.floor((n-s)/86400000)+1;
+}
+function applyAutoThreeMonthInterest(){
+  let changed=false;
+  const todayStr=today();
+
+  db.daily.forEach(l=>{
+    const age=loanAgeDays(l.start);
+    const status=l.status || 'Active';
+    if(status==='Completed'||status==='Closed - Waived'||status==='Closed - No Cash') return;
+
+    // Keep the ORIGINAL plan permanently. Every time that plan expires
+    // with money still outstanding, add one more month and 10% of the
+    // FULL ORIGINAL CAPITAL. This repeats without an upper limit.
+    const originalPlanDays=Number(l.originalPlanDays ?? l.planDaysOriginal ?? l.basePlanDays ?? l.days ?? 60);
+    const originalCapital=Number(l.originalCapital ?? l.capital ?? 0);
+    const rate=(l.interestPct==null || l.interestPct==='') ? 10 : Number(l.interestPct);
+
+    if(!originalCapital || !originalPlanDays) return;
+
+    // First extension happens on the day after the original plan ends.
+    // Example: 60-day plan -> Day 61, then Day 91, Day 121, ...
+    const extensionCount = age > originalPlanDays
+      ? Math.ceil((age - originalPlanDays) / 30)
+      : 0;
+
+    if(extensionCount<=0) return;
+
+    const baseInterest = Number(
+      l.baseInterest ??
+      (originalCapital * rate / 100 * (originalPlanDays / 30))
+    );
+
+    const expectedInterest = baseInterest +
+      (originalCapital * 0.10 * extensionCount);
+
+    const expectedTotal = originalCapital + expectedInterest;
+    const paid = Number(l.paid||0);
+    const outstanding = Math.max(0, expectedTotal-paid);
+
+    // Keep the plan duration as original + every 30-day extension.
+    const currentPlanDays = originalPlanDays + extensionCount*30;
+    const newDaily = outstanding>0 ? outstanding/30 : 0;
+
+    if(
+      !l.autoExtended ||
+      Number(l.extensionCount||0)!==extensionCount ||
+      Math.abs(Number(l.interest||0)-expectedInterest)>0.001 ||
+      Math.abs(Number(l.total||0)-expectedTotal)>0.001
+    ){
+      l.originalCapital=originalCapital;
+      l.originalPlanDays=originalPlanDays;
+      l.baseInterest=baseInterest;
+      l.extensionCount=extensionCount;
+      l.extensionInterest=originalCapital*rate/100*extensionCount;
+      l.interest=expectedInterest;
+      l.total=expectedTotal;
+      l.capital=originalCapital;
+      l.days=currentPlanDays;
+      l.planDays=currentPlanDays;
+      l.months=currentPlanDays/30;
+      l.daily=newDaily;
+      l.autoExtended=true;
+      l.extensionDate=todayStr;
+      l.extensionStartDate=addDays(l.start, originalPlanDays+(extensionCount-1)*30);
+      l.extensionEndDate=addDays(l.extensionStartDate,29);
+      l.extensionStatus=outstanding<=0?'Completed':'Pending';
+      l.outstanding=outstanding;
+      changed=true;
+    } else {
+      l.outstanding=outstanding;
+      l.daily=newDaily;
+    }
+  });
+  return changed;
+}
+
+function render(){
+  applyAutoThreeMonthInterest();
+ options('dailyCustomer');options('speedCustomer');options('speedDayCustomer');updateCollectionLoans();summaryCustomerOptions();
+ dCustomers.textContent=db.customers.length;
+ let capital=db.daily.reduce((s,x)=>s+(Number(x.capital)||0),0)+db.speed.reduce((s,x)=>s+(Number(x.capital)||0),0)+db.speedDay.reduce((s,x)=>s+(Number(x.capital)||0),0);
+ let interest=db.daily.reduce((s,x)=>s+(Number(x.interest)||0),0)+db.speed.reduce((s,x)=>s+(Number(x.interest)||0),0)+db.speedDay.reduce((s,x)=>s+(Number(x.interest)||0),0);
+ let grossPayable=capital+interest;
+ let collected=db.collections.reduce((s,x)=>s+(Number(x.amount)||0),0);
+ let waived=db.daily.concat(db.speed,db.speedDay).filter(x=>x.status==='Closed - Waived'||x.status==='Closed - No Cash').reduce((sum,x)=>sum+Math.max(0,Number(x.total||0)-db.collections.filter(c=>c.loanId===x.id).reduce((a,c)=>a+Number(c.amount||0),0)),0);
+ let balance=Math.max(0,grossPayable-collected-waived);
+ dGrossPayable.textContent=money(grossPayable);
+ dCashCollected.textContent=money(collected);
+ dBalance.textContent=money(balance);
+  let todayCollected=db.collections.filter(x=>String(x.date||'').slice(0,10)===today()).reduce((s,x)=>s+(Number(x.amount)||0),0);
+  dTodayCollected.textContent=money(todayCollected);
+ dCheques.textContent=db.speed.filter(x=>x.status==='Pending').length;
+ let td=0;db.daily.forEach(x=>{if(x.status==='Active'){let start=new Date(x.start+'T00:00:00'),now=new Date(today()+'T00:00:00'),elapsed=Math.floor((now-start)/86400000)+1;if(elapsed>=1&&elapsed<=x.days)td+=x.daily}});db.speed.forEach(x=>{if(x.status==='Pending'&&x.chequeDate===today())td+=x.total}); db.speedDay.forEach(x=>{if(x.status==='Active'&&loanAgeDays(x.startDate)>=1)td+=x.dailyInterest});
+ dToday.textContent=money(td);
+
+ customerTable.innerHTML=db.customers.map(c=>`<tr><td><button class="btn gray" onclick="openCustomerDetails('${c.id}')" title="Open customer ledger">${esc(c.name)}</button></td><td>${esc(c.phone)}</td><td>${esc(c.nic)}</td><td>${esc(c.address)}</td><td>${db.daily.filter(x=>x.customerId===c.id).length+db.speed.filter(x=>x.customerId===c.id).length+db.speedDay.filter(x=>x.customerId===c.id).length}</td><td><button class="btn gray" onclick="editCustomer('${c.id}')">Edit</button> <button class="btn red" onclick="deleteCustomer('${c.id}')">Delete</button></td></tr>`).join('')||'<tr><td colspan="6">No customers</td></tr>';
+
+ dailyTable.innerHTML=db.daily.map(x=>`<tr><td>${x.start||x.createdDate||'-'}</td><td>${esc(customerName(x.customerId))}</td><td>${money(x.capital)}</td><td>${x.interestPct}% / ${x.days} days</td><td>${money(x.total)}</td><td>${money(x.daily)}</td><td>${money(x.paid)}</td><td>${money(x.outstanding ?? Math.max(0,x.total-(x.paid||0)))}</td><td><span class="badge ${x.status==='Completed'?'cleared':'activeb'}">${x.status}</span>${x.autoExtended?'<div style="font-size:11px;margin-top:4px;color:#ea580c">3 Month Extension (+10% Full Capital)</div>':''}</td><td><button class="btn gray" onclick="editLoan('daily','${x.id}')">Modify</button></td></tr>`).join('')||'<tr><td colspan="9">No daily loans</td></tr>';
+
+ speedTable.innerHTML=db.speed.map(x=>`<tr><td>${x.createdDate||x.cashDate||'-'}</td><td>${esc(customerName(x.customerId))}</td><td>${money(x.capital)}</td><td>${money(x.interest)}</td><td>${money(x.total)}</td><td>${x.chequeDate}</td><td>${esc(x.chequeNo)}</td><td>${esc(x.bank)}</td><td><span class="badge ${x.status==='Cleared'?'cleared':x.status==='Returned'?'returned':'pending'}">${x.status}</span></td><td><button class="btn gray" onclick="changeCheque('${x.id}')">Status</button></td></tr>`).join('')||'<tr><td colspan="10">No speed loans</td></tr>';
+
+ speedDayTable.innerHTML=db.speedDay.map(x=>`<tr><td>${x.startDate||x.createdDate||'-'}</td><td>${esc(customerName(x.customerId))}</td><td>${money(x.capital)}</td><td>${money(x.dailyInterest)}</td><td>${loanAgeDays(x.startDate)}</td><td>${money(x.interest)}</td><td>${money(x.total)}</td><td>${money(x.paid||0)}</td><td>${money(Math.max(0,x.total-(x.paid||0)))}</td><td><span class="badge ${x.status==='Completed'?'cleared':'activeb'}">${x.status}</span></td><td><button class="btn gray" onclick="editLoan('speedDay','${x.id}')">Modify</button></td></tr>`).join('')||'<tr><td colspan="10">No Speed Day loans</td></tr>';
+
+ renderCollectionHistory();
+
+ let pending=db.speed.filter(x=>x.status==='Pending').sort((a,b)=>a.chequeDate.localeCompare(b.chequeDate)).slice(0,10);
+ dashboardCheques.innerHTML=pending.length?'<div class="table-wrap"><table class="table"><tr><th>Customer</th><th>Cheque Date</th><th>Amount</th><th>Bank</th><th>Status</th></tr>'+pending.map(x=>`<tr><td>${esc(customerName(x.customerId))}</td><td>${x.chequeDate}</td><td>${money(x.total)}</td><td>${esc(x.bank)}</td><td><span class="badge pending">Pending</span></td></tr>`).join('')+'</table></div>':'No pending cheques.';
+}
+
+
+function getFinancialBreakdown(){
+  const loans = [
+    ...db.daily.map(x=>({id:x.id,type:'Daily',customerId:x.customerId,capital:Number(x.capital)||0,interest:Number(x.interest)||0,total:Number(x.total)||0})),
+    ...db.speed.map(x=>({id:x.id,type:'Speed / Cheque',customerId:x.customerId,capital:Number(x.capital)||0,interest:Number(x.interest)||0,total:Number(x.total)||0})),
+    ...db.speedDay.map(x=>({id:x.id,type:'Speed Day',customerId:x.customerId,capital:Number(x.capital)||0,interest:Number(x.interest)||0,total:Number(x.total)||0}))
+  ];
+  let capitalTotal=0, interestTotal=0, capitalReceived=0, interestReceived=0;
+  const details=[];
+
+  loans.forEach(loan=>{
+    const payments=db.collections
+      .filter(c=>c.loanId===loan.id)
+      .sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+    const paid=Math.min(loan.total, payments.reduce((s,c)=>s+(Number(c.amount)||0),0));
+
+    // Each collection is split between capital and interest in the same
+    // proportion as the loan's capital/interest composition.
+    const interestPart=loan.total>0 ? paid*(loan.interest/loan.total) : 0;
+    const capitalPart=Math.max(0, paid-interestPart);
+    const capOut=Math.max(0,loan.capital-capitalPart);
+    const intOut=Math.max(0,loan.interest-interestPart);
+
+    capitalTotal+=loan.capital;
+    interestTotal+=loan.interest;
+    capitalReceived+=capitalPart;
+    interestReceived+=interestPart;
+
+    details.push({loan,paid,capitalPart,interestPart,capOut,intOut});
+  });
+
+  return {
+    capitalTotal, interestTotal, capitalReceived, interestReceived,
+    capitalOutstanding:Math.max(0,capitalTotal-capitalReceived),
+    interestOutstanding:Math.max(0,interestTotal-interestReceived),
+    totalReceived:capitalReceived+interestReceived,
+    totalOutstanding:Math.max(0,(capitalTotal+interestTotal)-(capitalReceived+interestReceived)),
+    details
+  };
+}
+
+function openDashboardDetails(){
+  const f=getFinancialBreakdown();
+  document.getElementById('dashboardDetails').innerHTML=`
+    <div class="cards" style="margin-top:16px">
+      <div class="card"><div class="label">Total Capital</div><div class="value">${money(f.capitalTotal)}</div></div>
+      <div class="card"><div class="label">Capital Received Cash</div><div class="value">${money(f.capitalReceived)}</div></div>
+      <div class="card"><div class="label">Capital Outstanding</div><div class="value">${money(f.capitalOutstanding)}</div></div>
+      <div class="card"><div class="label">Total Interest</div><div class="value">${money(f.interestTotal)}</div></div>
+      <div class="card"><div class="label">Interest Received Cash</div><div class="value">${money(f.interestReceived)}</div></div>
+      <div class="card"><div class="label">Interest Outstanding</div><div class="value">${money(f.interestOutstanding)}</div></div>
+      <div class="card"><div class="label">Total Collection Cash</div><div class="value">${money(f.totalReceived)}</div></div>
+      <div class="card"><div class="label">Total Balance Outstanding</div><div class="value">${money(f.totalOutstanding)}</div></div>
+    </div>
+    <div class="panel">
+      <h2>Loan-wise Details</h2>
+      <div class="table-wrap"><table class="table">
+        <thead><tr><th>Customer</th><th>Type</th><th>Capital</th><th>Capital Received</th><th>Capital Outstanding</th><th>Interest</th><th>Interest Received</th><th>Interest Outstanding</th></tr></thead>
+        <tbody>
+          ${f.details.map(d=>`<tr>
+            <td>${esc(customerName(d.loan.customerId))}</td>
+            <td>${d.loan.type}</td>
+            <td>${money(d.loan.capital)}</td>
+            <td>${money(d.capitalPart)}</td>
+            <td>${money(d.capOut)}</td>
+            <td>${money(d.loan.interest)}</td>
+            <td>${money(d.interestPart)}</td>
+            <td>${money(d.intOut)}</td>
+          </tr>`).join('') || '<tr><td colspan="8">No loans</td></tr>'}
+        </tbody>
+      </table></div>
+    </div>
+    `;
+  document.getElementById('dashboardDetailsModal').classList.remove('hidden');
+}
+
+
+function printDetails(id){
+  const el=document.getElementById(id);
+  if(!el){toast('Print details not available');return;}
+  // Print only the selected important details, without the app navigation/buttons.
+  const old=document.querySelector('.sp-print-area.sp-active-print');
+  if(old) old.classList.remove('sp-active-print');
+  el.classList.add('sp-active-print');
+  const title=(document.getElementById('modalCustomerName')?.textContent||'Sweet Park Details').trim();
+  document.title=title;
+  window.print();
+  setTimeout(()=>{el.classList.remove('sp-active-print');document.title='Sweet Park';},500);
+}
+
+function closeDashboardDetails(){
+  document.getElementById('dashboardDetailsModal').classList.add('hidden');
+}
+
+function openTotalCollection(){
+  const rows = db.collections.map(c=>({
+    date:c.date||'-',
+    customer:customerName(c.customerId),
+    type:c.type||'-',
+    amount:Number(c.amount)||0,
+    loanId:c.loanId||'-'
+  })).sort((a,b)=>b.date.localeCompare(a.date));
+  const total=rows.reduce((sum,r)=>sum+r.amount,0);
+  document.getElementById('totalCollectionDetails').innerHTML=`
+    <div class="cards" style="margin-top:16px">
+      <div class="card"><div class="label">Total Collection</div><div class="value">${money(total)}</div></div>
+      <div class="card"><div class="label">Collection Entries</div><div class="value">${rows.length}</div></div>
+    </div>
+    <div class="panel" style="margin-top:16px">
+      <h2>Full Collection Details</h2>
+      <div class="table-wrap"><table class="table">
+        <thead><tr><th>#</th><th>Customer</th><th>Collection Date</th><th>Loan Type</th><th>Amount</th></tr></thead>
+        <tbody>${rows.map((r,i)=>`<tr><td>${i+1}</td><td>${esc(r.customer)}</td><td>${esc(r.date)}</td><td>${esc(r.type)}</td><td>${money(r.amount)}</td></tr>`).join('') || '<tr><td colspan="5">No collections</td></tr>'}</tbody>
+      </table></div>
+    </div>`;
+  document.getElementById('totalCollectionModal').classList.remove('hidden');
+}
+function openTodayCollection(){
+  const todayDate=today();
+  const rows=db.collections.filter(c=>String(c.date||'').slice(0,10)===todayDate).map(c=>({
+    date:c.date||todayDate, customer:customerName(c.customerId), type:c.type||'-', amount:Number(c.amount)||0, loanId:c.loanId||'-'
+  })).sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+  const total=rows.reduce((sum,r)=>sum+r.amount,0);
+  document.getElementById('totalCollectionDetails').innerHTML=`
+    <div class="cards" style="margin-top:16px">
+      <div class="card"><div class="label">Today's Collection</div><div class="value">${money(total)}</div></div>
+      <div class="card"><div class="label">Today's Entries</div><div class="value">${rows.length}</div></div>
+    </div>
+    <div class="panel" style="margin-top:16px">
+      <h2>Today's Collection Details - ${esc(todayDate)}</h2>
+      <div class="table-wrap"><table class="table">
+        <thead><tr><th>#</th><th>Customer</th><th>Collection Date</th><th>Loan Type</th><th>Amount</th></tr></thead>
+        <tbody>${rows.map((r,i)=>`<tr><td>${i+1}</td><td>${esc(r.customer)}</td><td>${esc(r.date)}</td><td>${esc(r.type)}</td><td>${money(r.amount)}</td></tr>`).join('') || '<tr><td colspan="5">No collections entered today</td></tr>'}</tbody>
+      </table></div>
+    </div>`;
+  document.getElementById('totalCollectionModal').classList.remove('hidden');
+}
+
+function showCustomerCollectionDetails(name){
+  const rows=db.collections.filter(c=>customerName(c.customerId)===name).sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+  const html=`<div class="panel" style="margin-top:16px"><h2>${esc(name)} - Collection History</h2>
+  <div class="table-wrap"><table class="table"><thead><tr><th>Date</th><th>Type</th><th>Amount</th></tr></thead><tbody>
+  ${rows.map(r=>`<tr><td>${esc(r.date||'-')}</td><td>${esc(r.type||'-')}</td><td>${money(r.amount)}</td></tr>`).join('')||'<tr><td colspan="3">No collections</td></tr>'}
+  </tbody></table></div></div>`;
+  document.getElementById('totalCollectionDetails').insertAdjacentHTML('beforeend',html);
+}
+function closeTotalCollection(){ document.getElementById('totalCollectionModal').classList.add('hidden'); }
+
+function renderCollectionHistory(){
+  const filterDate=document.getElementById('collectionFilterDate')?.value||'';
+  const rows=[...db.collections].filter(x=>!filterDate||String(x.date||'').slice(0,10)===filterDate).sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+  collectionTable.innerHTML=rows.map(x=>`<tr><td>${esc(x.date||'-')}</td><td><button class="btn gray" onclick="openCustomerDetails('${x.customerId}')">${esc(customerName(x.customerId))}</button></td><td>${esc(x.type||'-')}</td><td>${money(x.amount)}</td><td><button class="btn gray" onclick="editCollection('${x.id}')">Modify</button> <button class="btn red" onclick="deleteCollection('${x.id}')">Delete</button></td></tr>`).join('')||'<tr><td colspan="5">No collections for selected date</td></tr>';
+}
+function clearCollectionDateFilter(){
+  const el=document.getElementById('collectionFilterDate');
+  if(el) el.value='';
+  renderCollectionHistory();
+}
+
+function latestLoanCorrection(loanId){
+  return db.corrections.filter(x=>x.loanId===loanId).sort((a,b)=>String(b.date||'').localeCompare(String(a.date||''))||String(b.createdAt||'').localeCompare(String(a.createdAt||'')))[0]||null;
+}
+function loanLedgerState(loanId, opening){
+  const cols=db.collections.filter(x=>x.loanId===loanId).sort((a,b)=>String(a.date||'').localeCompare(String(b.date||'')));
+  const correction=latestLoanCorrection(loanId);
+  if(!correction){const collected=cols.reduce((s,x)=>s+(Number(x.amount)||0),0);return {correction:null,oldCols:cols,newCols:[],oldFinal:Math.max(0,opening-collected),balance:Math.max(0,opening-collected),collected};}
+  const oldCols=cols.filter(x=>String(x.date||'').slice(0,10)<=String(correction.date||''));
+  const newCols=cols.filter(x=>String(x.date||'').slice(0,10)>String(correction.date||''));
+  const oldCollected=oldCols.reduce((s,x)=>s+(Number(x.amount)||0),0);
+  const oldFinal=Math.max(0,opening-oldCollected);
+  const newCollected=newCols.reduce((s,x)=>s+(Number(x.amount)||0),0);
+  return {correction,oldCols,newCols,oldFinal,balance:Math.max(0,Number(correction.amount||0)-newCollected),collected:oldCollected+newCollected};
+}
+
+function openCustomerDetails(id){
+  const c=db.customers.find(x=>x.id===id); if(!c)return;
+  const loans=[
+    ...db.daily.filter(x=>x.customerId===id).map(x=>({...x,_type:'daily',_label:'Daily Collection',_date:x.start||x.createdDate||'-'})),
+    ...db.speed.filter(x=>x.customerId===id).map(x=>({...x,_type:'speed',_label:'Speed / Cheque',_date:x.createdDate||x.cashDate||'-'})),
+    ...db.speedDay.filter(x=>x.customerId===id).map(x=>({...x,_type:'speedDay',_label:'Speed Day',_date:x.startDate||x.createdDate||'-'}))
+  ].sort((a,b)=>String(b._date).localeCompare(String(a._date)));
+
+  let totalOpening=0,totalCollected=0,totalBalance=0;
+  const loanRows=loans.map((loan,loanIndex)=>{
+    const loanCols=db.collections.filter(x=>x.loanId===loan.id);
+    const capital=Number(loan.capital)||0;
+    const interest=Number(loan.interest)||0;
+    const opening=Number(loan.total)||capital+interest;
+    const ledgerState=loanLedgerState(loan.id,opening);
+    const collected=ledgerState.collected;
+    const balance=ledgerState.balance;
+    totalOpening+=opening;
+    totalCollected+=collected;
+    totalBalance+=balance;
+
+    return `<tr onclick="openLoanLedger('${loan.id}')" style="cursor:pointer" title="Click to open loan ledger">
+      <td><b>Loan ${loanIndex+1}</b></td>
+      <td>${esc(loan._date)}</td>
+      <td>${esc(loan._label)}</td>
+      <td>${money(capital)}</td>
+      <td>${money(interest)}</td>
+      <td><b>${money(opening)}</b></td>
+      <td>${money(collected)}</td>
+      <td><b>${money(balance)}</b></td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('modalCustomerName').textContent=c.name+' - Customer Loans';
+  document.getElementById('customerDetails').innerHTML=`
+    <div class="cards">
+      <div class="card"><div class="label">Customer</div><div class="value">${esc(c.name)}</div></div>
+      <div class="card"><div class="label">Total Loan Opening</div><div class="value">${money(totalOpening)}</div></div>
+      <div class="card"><div class="label">Total Collection</div><div class="value">${money(totalCollected)}</div></div>
+      <div class="card"><div class="label">Total Balance</div><div class="value">${money(totalBalance)}</div></div>
+    </div>
+    <div class="panel" style="margin-top:16px">
+      <h2>Customer Loans</h2>
+      <p style="margin:0 0 12px;color:#666">Each loan is shown in one row. <b>Click any loan row</b> to open its full ledger.</p>
+      <div class="table-wrap"><table class="table">
+        <thead><tr><th>Loan</th><th>Date</th><th>Type</th><th>Capital</th><th>Interest</th><th>Opening Loan</th><th>Collected</th><th>Balance</th></tr></thead>
+        <tbody>${loanRows || '<tr><td colspan="8">No loans found for this customer.</td></tr>'}</tbody>
+      </table></div>
+    </div>`;
+  document.getElementById('customerModal').classList.remove('hidden');
+}
+function closeCustomerDetails(){document.getElementById('customerModal').classList.add('hidden');}
+function openLoanLedger(loanId){
+  const loan=[...db.daily,...db.speed,...db.speedDay].find(x=>x.id===loanId); if(!loan)return;
+  const c=db.customers.find(x=>x.id===loan.customerId); if(!c)return;
+  const type=db.daily.some(x=>x.id===loanId)?'Daily Collection':db.speed.some(x=>x.id===loanId)?'Speed / Cheque':'Speed Day';
+  const date=loan.startDate||loan.start||loan.createdDate||loan.cashDate||'-';
+  const capital=Number(loan.capital)||0;
+  const interest=Number(loan.interest)||0;
+  const opening=Number(loan.total)||capital+interest;
+  const state=loanLedgerState(loanId,opening);
+  let oldRunning=opening;
+  const oldRows=state.oldCols.map(x=>{const amount=Number(x.amount)||0,before=oldRunning;oldRunning=Math.max(0,oldRunning-amount);return `<tr><td>${esc(x.date||'-')}</td><td>${money(before)}</td><td>${money(amount)}</td><td>${money(oldRunning)}</td></tr>`;}).join('');
+  let newRunning=state.correction?Number(state.correction.amount)||0:oldRunning;
+  const newRows=state.newCols.map(x=>{const amount=Number(x.amount)||0,before=newRunning;newRunning=Math.max(0,newRunning-amount);return `<tr><td>${esc(x.date||'-')}</td><td>${money(before)}</td><td>${money(amount)}</td><td>${money(newRunning)}</td></tr>`;}).join('');
+  const totalCollected=state.collected;
+  const finalBalance=state.balance;
+  document.getElementById('modalCustomerName').textContent=c.name+' - Loan Ledger';
+  document.getElementById('customerDetails').innerHTML=`
+    <div style="margin-bottom:12px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn gray" onclick="openCustomerDetails('${c.id}')">← Back to Customer Loans</button><button class="btn" onclick="correctLoanBalance('${loanId}')">Correct Balance</button></div>
+    <div class="cards">
+      <div class="card"><div class="label">Customer</div><div class="value">${esc(c.name)}</div></div>
+      <div class="card"><div class="label">Loan Type</div><div class="value">${esc(type)}</div></div>
+      <div class="card"><div class="label">Loan Date</div><div class="value">${esc(date)}</div></div>
+      <div class="card"><div class="label">Capital</div><div class="value">${money(capital)}</div></div>
+      <div class="card"><div class="label">Interest</div><div class="value">${money(interest)}</div></div>
+      <div class="card"><div class="label">Opening Loan</div><div class="value">${money(opening)}</div></div>
+      <div class="card"><div class="label">Total Collection</div><div class="value">${money(state.collected)}</div></div>
+      <div class="card"><div class="label">Balance</div><div class="value">${money(finalBalance)}</div></div>
+    </div>
+    <div class="panel" style="margin-top:16px">
+      <h2>Loan Ledger</h2>
+      <div class="table-wrap"><table class="table">
+        <thead><tr><th>Date</th><th>Opening Balance</th><th>Collection</th><th>Closing Balance</th></tr></thead>
+        <tbody>
+          <tr><td>${esc(date)}</td><td>-</td><td>-</td><td><b>${money(opening)}</b></td></tr>
+          ${oldRows || '<tr><td colspan="4">No collections for this loan</td></tr>'}
+          ${state.correction?`<tr style="background:#f3f4f6"><td colspan="3"><b>Old Ledger Final Balance</b></td><td><b>${money(state.oldFinal)}</b></td></tr>`:``}
+          ${state.correction?`<tr style="background:#e0f2fe"><td><b>${esc(state.correction.date)}</b></td><td>${money(state.oldFinal)}</td><td>-</td><td><b>Corrected Opening: ${money(state.correction.amount)}</b></td></tr><tr><td colspan="4"><b>New Ledger</b></td></tr>${newRows}`:''}
+          ${state.correction?`<tr style="background:#f3f4f6"><td colspan="3"><b>New Ledger Final Balance</b></td><td><b>${money(finalBalance)}</b></td></tr>`:''}
+        </tbody>
+      </table></div>
+    </div>`;
+}
+
+
+// Add a dated correction row. Original loan and collection records are not modified.
+async function correctLoanBalance(loanId){
+  const loan=[...db.daily,...db.speed,...db.speedDay].find(x=>x.id===loanId); if(!loan)return;
+  const opening=Number(loan.total)||Number(loan.capital||0)+Number(loan.interest||0);
+  const state=loanLedgerState(loanId,opening);
+  const currentBalance=state.balance;
+  const entered=prompt('Enter the corrected opening balance for the NEW ledger (Rs.).\nThe old ledger and collection details will remain unchanged. Date: '+today(),String(currentBalance));
+  if(entered===null)return;
+  const normalized=entered.replace(/[ ,\s]/g,''); const amount=Number(normalized);
+  if(normalized===''||!Number.isFinite(amount)||amount<0){alert('Please enter a valid amount (0 or more).');return;}
+  const correction={id:crypto.randomUUID(),loanId,customerId:loan.customerId,amount,date:today(),createdAt:new Date().toISOString()};
+  try{
+    const {error}=await supabaseClient.from('ledger_balance_corrections').insert({id:correction.id,loan_id:correction.loanId,customer_id:correction.customerId,amount:correction.amount,correction_date:correction.date,created_at:correction.createdAt});
+    if(error)throw error;
+    db.corrections.push(correction);
+    setDbStatus('New ledger opening balance saved ✓',true);
+    openLoanLedger(loanId);
+    if(document.getElementById('loanSummary'))renderLoanSummary();
+    if(typeof render==='function')render();
+    alert('Correction saved for today. Old ledger and collection details are unchanged.');
+  }catch(e){
+    const msg=e?.message||String(e);
+    alert('Could not save correction. Please run the SQL setup file in Supabase first.\n'+msg);
+  }
+}
+
+function allLoanRows(){
+ return [
+  ...db.daily.map(x=>({...x,_type:'daily',_label:'Daily Collection',_date:x.start||''})),
+  ...db.speed.map(x=>({...x,_type:'speed',_label:'Speed / Cheque',_date:x.createdDate||x.cashDate||''})),
+  ...db.speedDay.map(x=>({...x,_type:'speedDay',_label:'Speed Day',_date:x.startDate||''}))
+ ];
+}
+function summaryCustomerOptions(){
+ const s=document.getElementById('summaryCustomer');if(!s)return;
+ const v=s.value||'all';
+ s.innerHTML='<option value="all">All Customers</option>'+db.customers.map(c=>`<option value="${c.id}">${esc(c.name)} - ${esc(c.phone)}</option>`).join('');
+ if([...s.options].some(o=>o.value===v))s.value=v;
+}
+function renderLoanSummary(){
+ summaryCustomerOptions();
+ const type=document.getElementById('summaryType').value;
+ const customer=document.getElementById('summaryCustomer').value;
+ const status=document.getElementById('summaryStatus').value;
+ const search=document.getElementById('summarySearch').value.trim().toLowerCase();
+ const rows=allLoanRows().filter(x=>{
+  if(type!=='all'&&x._type!==type)return false;
+  if(customer!=='all'&&x.customerId!==customer)return false;
+  if(status!=='all'&&(x.status||'Active')!==status)return false;
+  if(search&&!((customerName(x.customerId)+' '+x.id).toLowerCase().includes(search)))return false;
+  return true;
+ });
+ const paidOf=x=>db.collections.filter(c=>c.loanId===x.id).reduce((s,c)=>s+Number(c.amount||0),0);
+ const paid=x=>(x._type==='daily'||x._type==='speedDay')?Number(x.paid||0):paidOf(x);
+ const outstanding=x=>(x.status==='Closed - Waived'||x.status==='Closed - No Cash')?0:Math.max(0,Number(x.total||0)-paid(x));
+ const sums=k=>rows.reduce((s,x)=>s+Number(x[k]||0),0);
+ document.getElementById('summaryCards').innerHTML=[
+  ['Loans',rows.length],['Capital',money(sums('capital'))],['Interest',money(sums('interest'))],
+  ['Total Payable',money(sums('total'))],['Paid',money(rows.reduce((s,x)=>s+paid(x),0))],['Outstanding',money(rows.reduce((s,x)=>s+outstanding(x),0))]
+ ].map(a=>`<div class="card"><div class="label">${a[0]}</div><div class="value">${a[1]}</div></div>`).join('');
+ document.getElementById('loanSummaryTable').innerHTML=rows.map(x=>`<tr>
+ <td>${x._date||'-'}</td><td>${esc(customerName(x.customerId))}</td><td>${x._label}</td>
+ <td>${money(x.capital)}</td><td>${money(x.interest)}</td><td>${money(x.total)}</td>
+ <td>${money(paid(x))}</td><td>${money(outstanding(x))}</td>
+ <td><span class="badge ${x.status==='Completed'||x.status==='Cleared'?'cleared':x.status==='Returned'?'returned':'activeb'}">${esc(x.status||'Active')}</span></td>
+ <td><button class="btn gray" onclick="editLoan('${x._type}','${x.id}')">Modify</button> <button class="btn danger" onclick="endLoanWithoutCash('${x._type}','${x.id}')">End Loan</button></td></tr>`).join('')||'<tr><td colspan="10">No loans found</td></tr>';
+}
+async function endLoanWithoutCash(type,id){
+ const loan=(db[type]||[]).find(x=>x.id===id); if(!loan)return;
+ if(loan.status==='Closed - Waived'||loan.status==='Closed - No Cash'){toast('Loan already ended');return;}
+ if(!confirm('End this loan without receiving the remaining cash? Already collected part cash will remain unchanged.'))return;
+ const oldStatus=loan.status; loan.status='Closed - Waived';
+ const ok=await syncRecord(type,loan,'update');
+ if(!ok){loan.status=oldStatus;toast('Could not save. Check Supabase status column / connection.');render();return;}
+ render();renderLoanSummary();toast('Loan ended without cash');
+}
+function customerFullSummaryRows(){
+ const grouped=new Map();
+ for(const x of allLoanRows()){
+  const name=customerName(x.customerId); if(!grouped.has(x.customerId))grouped.set(x.customerId,{id:x.customerId,name,loans:0,capital:0,interest:0,total:0,paid:0,outstanding:0,details:[]});
+  const g=grouped.get(x.customerId); const paid=(x._type==='daily'||x._type==='speedDay')?Number(x.paid||0):db.collections.filter(c=>c.loanId===x.id).reduce((a,c)=>a+Number(c.amount||0),0);
+  const out=(x.status==='Closed - Waived'||x.status==='Closed - No Cash')?0:Math.max(0,Number(x.total||0)-paid);
+  g.loans++;g.capital+=Number(x.capital||0);g.interest+=Number(x.interest||0);g.total+=Number(x.total||0);g.paid+=paid;g.outstanding+=out;
+  g.details.push({date:x._date||'',loanId:x.id,category:x._label,capital:Number(x.capital||0),interest:Number(x.interest||0),total:Number(x.total||0),paid,outstanding:out,status:x.status||'Active'});
+ }
+ return [...grouped.values()].sort((a,b)=>a.name.localeCompare(b.name));
+}
+function showCustomerFullSummary(){
+ const gs=customerFullSummaryRows();
+ let html='<div class="panel"><h2>Customer-wise Full Loan Summary</h2><div class="table-wrap"><table class="table"><thead><tr><th>Customer</th><th>Loans</th><th>Capital</th><th>Interest</th><th>Total Payable</th><th>Paid</th><th>Outstanding</th></tr></thead><tbody>';
+ for(const g of gs){html+=`<tr><td>${esc(g.name)}</td><td>${g.loans}</td><td>${money(g.capital)}</td><td>${money(g.interest)}</td><td>${money(g.total)}</td><td>${money(g.paid)}</td><td>${money(g.outstanding)}</td></tr>`;}
+ const total=gs.reduce((a,g)=>({loans:a.loans+g.loans,capital:a.capital+g.capital,interest:a.interest+g.interest,total:a.total+g.total,paid:a.paid+g.paid,outstanding:a.outstanding+g.outstanding}),{loans:0,capital:0,interest:0,total:0,paid:0,outstanding:0});
+ html+=`<tr><th>Overall Total</th><th>${total.loans}</th><th>${money(total.capital)}</th><th>${money(total.interest)}</th><th>${money(total.total)}</th><th>${money(total.paid)}</th><th>${money(total.outstanding)}</th></tr></tbody></table></div>`;
+ html+='<h3>Loan Details by Customer</h3>';
+ for(const g of gs){html+=`<h3>${esc(g.name)}</h3><div class="table-wrap"><table class="table"><thead><tr><th>Date</th><th>Loan ID</th><th>Category</th><th>Capital</th><th>Interest</th><th>Total</th><th>Paid</th><th>Outstanding</th><th>Status</th></tr></thead><tbody>`;for(const d of g.details){html+=`<tr><td>${esc(d.date)}</td><td>${esc(d.loanId)}</td><td>${esc(d.category)}</td><td>${money(d.capital)}</td><td>${money(d.interest)}</td><td>${money(d.total)}</td><td>${money(d.paid)}</td><td>${money(d.outstanding)}</td><td>${esc(d.status)}</td></tr>`;}html+='</tbody></table></div>';}
+ html+='</div>';
+ const w=window.open('','_blank'); if(!w){toast('Allow pop-ups to view summary');return;}w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>Customer-wise Full Loan Summary</title><style>body{font:14px Arial;padding:20px;color:#111}table{width:100%;border-collapse:collapse;margin:10px 0 20px}th,td{border:1px solid #aaa;padding:6px;text-align:left}h2,h3{margin-top:20px} @media print{button{display:none}}</style></head><body>'+html+'<button onclick="window.print()">Print / Save PDF</button></body></html>');w.document.close();
+}
+function downloadCustomerFullSummary(){
+ const gs=customerFullSummaryRows(); const rows=[['Customer','Loan ID','Date','Category','Capital','Interest','Total Payable','Paid','Outstanding','Status']];
+ for(const g of gs)for(const d of g.details)rows.push([g.name,d.loanId,d.date,d.category,d.capital,d.interest,d.total,d.paid,d.outstanding,d.status]);
+ const csv=rows.map(r=>r.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(',')).join('\r\n');const blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8;'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='Sweet_Park_Customer_Full_Loan_Summary.csv';a.click();URL.revokeObjectURL(a.href);
+}
+function resetLoanSummary(){
+ document.getElementById('summaryType').value='all';document.getElementById('summaryCustomer').value='all';
+ document.getElementById('summaryStatus').value='all';document.getElementById('summarySearch').value='';renderLoanSummary();
+}
+function editLoan(type,id){
+ const x=(db[type]||[]).find(a=>a.id===id);if(!x)return;
+ document.getElementById('editLoanId').value=id;document.getElementById('editLoanType').value=type;
+ document.getElementById('editLoanTitle').textContent='Modify '+(type==='daily'?'Daily Collection':type==='speedDay'?'Speed Day':'Speed / Cheque')+' Loan';
+ const customer=`<label>Customer<select id="editCustomer">${db.customers.map(c=>`<option value="${c.id}" ${c.id===x.customerId?'selected':''}>${esc(c.name)}</option>`).join('')}</select></label>`;
+ let f='';
+ if(type==='daily')f=`<div class="grid">${customer}<label>Capital<input id="editCapital" type="number" step="0.01" value="${Number(x.capital||0)}"></label><label>Interest % / Month<input id="editRate" type="number" step="0.01" value="${Number(x.interestPct??10)}"></label><label>Plan Days<input id="editDays" type="number" min="1" value="${Number(x.days||60)}"></label><label>Start Date<input id="editStart" type="date" value="${x.start||''}"></label></div>`;
+ else if(type==='speedDay')f=`<div class="grid">${customer}<label>Capital<input id="editCapital" type="number" step="0.01" value="${Number(x.capital||0)}"></label><label>Per Day / Rs.100,000<input id="editRate" type="number" step="0.01" value="${Number(x.rate||0)}"></label><label>Starting Date<input id="editStart" type="date" value="${x.startDate||''}"></label></div>`;
+ else f=`<div class="grid">${customer}<label>Capital<input id="editCapital" type="number" step="0.01" value="${Number(x.capital||0)}"></label><label>Rate / Rs.100,000 / Day<input id="editRate" type="number" step="0.01" value="${Number(x.rate||0)}"></label><label>Cheque Days<input id="editDays" type="number" min="1" value="${Number(x.days||1)}"></label><label>Cheque Number<input id="editCheque" value="${esc(x.chequeNo||'')}"></label><label>Bank<input id="editBank" value="${esc(x.bank||'')}"></label><label>Cash Date<input id="editStart" type="date" value="${x.cashDate||''}"></label><label>Cheque Date<input id="editChequeDate" type="date" value="${x.chequeDate||''}"></label><label>Status<select id="editStatus">${['Pending','Cleared','Returned'].map(s=>`<option ${x.status===s?'selected':''}>${s}</option>`).join('')}</select></label></div>`;
+ document.getElementById('editLoanFields').innerHTML=f;document.getElementById('editLoanModal').classList.remove('hidden');
+}
+function closeEditLoan(){document.getElementById('editLoanModal').classList.add('hidden');}
+document.getElementById('editLoanForm').onsubmit=async e=>{
+ e.preventDefault();const type=document.getElementById('editLoanType').value,id=document.getElementById('editLoanId').value;
+ const x=(db[type]||[]).find(a=>a.id===id);if(!x)return;
+ x.customerId=document.getElementById('editCustomer').value;
+ const cap=Number(document.getElementById('editCapital').value)||0,rate=Number(document.getElementById('editRate').value)||0;
+ if(type==='daily'){
+  const days=Math.max(1,Number(document.getElementById('editDays').value)||60);
+  x.capital=x.originalCapital=cap;x.interestPct=rate;x.days=x.planDays=x.originalPlanDays=x.basePlanDays=days;x.months=days/30;
+  x.baseInterest=cap*rate/100*(days/30);x.interest=x.baseInterest;x.total=cap+x.interest;x.start=(document.getElementById('editStart').value||'').trim(); if(!x.start){toast('Select a start date');return;} x.daily=x.total/days;x.extensionCount=0;x.autoExtended=false;
+ }else if(type==='speedDay'){
+  x.capital=cap;x.rate=rate;x.startDate=(document.getElementById('editStart').value||'').trim();if(!x.startDate){toast('Select a starting date');return;}x.dailyInterest=cap/100000*rate;
+  const days=Math.max(0,loanAgeDays(x.startDate));x.interest=x.dailyInterest*days;x.total=cap+x.interest;
+ }else{
+  const days=Math.max(1,Number(document.getElementById('editDays').value)||1);
+  x.capital=cap;x.rate=rate;x.days=days;x.interest=cap/100000*rate*days;x.total=cap+x.interest;
+  x.chequeNo=document.getElementById('editCheque').value.trim();x.bank=document.getElementById('editBank').value.trim();
+  x.cashDate=document.getElementById('editStart').value;x.chequeDate=document.getElementById('editChequeDate').value;x.status=document.getElementById('editStatus').value;
+ }
+ const paid=db.collections.filter(c=>c.loanId===x.id).reduce((s,c)=>s+Number(c.amount||0),0);
+ x.paid=paid;x.outstanding=Math.max(0,x.total-paid);
+ if((type==='daily'||type==='speedDay')&&paid>=x.total&&x.total>0)x.status='Completed';
+ if(type==='speed'&&paid>=x.total&&x.total>0)x.status='Cleared';
+ const ok=await syncRecord(type,x,'update');
+ if(!ok){toast('Modify failed: '+lastDbError);return;}
+ render();closeEditLoan();renderLoanSummary();toast('Loan modified ✓');
+};
+document.getElementById('summaryType').onchange=renderLoanSummary;
+document.getElementById('summaryCustomer').onchange=renderLoanSummary;
+document.getElementById('summaryStatus').onchange=renderLoanSummary;
+document.getElementById('summarySearch').oninput=renderLoanSummary;
+
+async function editCollection(id){
+ const c=db.collections.find(x=>x.id===id); if(!c)return;
+ const amountStr=prompt('Collection Amount',String(c.amount??'')); if(amountStr===null)return;
+ const amount=Number(amountStr); if(!Number.isFinite(amount)||amount<=0){toast('Enter a valid collection amount');return;}
+ const date=prompt('Collection Date (YYYY-MM-DD)',c.date||today()); if(date===null)return;
+ if(!/^\d{4}-\d{2}-\d{2}$/.test(date)){toast('Enter date as YYYY-MM-DD');return;}
+ const loan=[...db.daily,...db.speed,...db.speedDay].find(x=>x.id===c.loanId);
+ const oldAmount=Number(c.amount)||0; c.amount=amount; c.date=date;
+ if(loan){
+  const paid=db.collections.filter(v=>v.loanId===loan.id).reduce((sum,v)=>sum+Number(v.amount||0),0);
+  if(c.type==='daily'||c.type==='speedDay'){loan.paid=paid; loan.outstanding=Math.max(0,Number(loan.total||0)-paid); loan.status=paid>=Number(loan.total||0)&&Number(loan.total||0)>0?'Completed':'Active';}
+  else loan.status=paid>=Number(loan.total||0)&&Number(loan.total||0)>0?'Cleared':'Pending';
+ }
+ const ok=await syncRecord('collection',c,'update');
+ if(!ok){c.amount=oldAmount;toast('Collection modify failed: '+lastDbError);return;}
+ render(); toast('Collection modified ✓');
+}
+
+async function deleteCollection(id){
+ const c=db.collections.find(x=>x.id===id); if(!c)return;
+ if(!confirm(`Delete this collection of ${money(c.amount)}?`))return;
+ const loan=[...db.daily,...db.speed,...db.speedDay].find(x=>x.id===c.loanId); const oldCollections=[...db.collections];
+ db.collections=db.collections.filter(x=>x.id!==id);
+ if(loan){
+  const paid=db.collections.filter(v=>v.loanId===loan.id).reduce((sum,v)=>sum+Number(v.amount||0),0);
+  if(c.type==='daily'||c.type==='speedDay'){loan.paid=paid; loan.outstanding=Math.max(0,Number(loan.total||0)-paid); loan.status=paid>=Number(loan.total||0)&&Number(loan.total||0)>0?'Completed':'Active';}
+  else loan.status=paid>=Number(loan.total||0)&&Number(loan.total||0)>0?'Cleared':'Pending';
+ }
+ try{
+  const {error}=await supabaseClient.from('collections').delete().eq('id',id); if(error)throw error;
+  render(); toast('Collection deleted ✓');
+ }catch(e){db.collections=oldCollections;render();lastDbError=dbErr(e);toast('Collection delete failed: '+lastDbError);}
+}
+
+function deleteCustomer(id){if(confirm('Delete this customer? Existing loans will remain.')){db.customers=db.customers.filter(x=>x.id!==id);save();toast('Customer deleted')}}
+function changeCheque(id){let x=db.speed.find(a=>a.id===id);let s=prompt('Enter status: Pending / Cleared / Returned',x.status);if(['Pending','Cleared','Returned'].includes(s)){x.status=s;save();}}
+
+async function loadFromDatabase(){
+ try{
+  setDbStatus('Loading database...');
+  const [cr,dr,sr,cor]=await Promise.all([
+   supabaseClient.from('customers').select('*'),
+   supabaseClient.from('daily_loans').select('*'),
+   supabaseClient.from('speed_loans').select('*'),
+   supabaseClient.from('collections').select('*')
+  ]);
+  const correctionResult=await supabaseClient.from('ledger_balance_corrections').select('*');
+  if(cr.error) throw cr.error;
+  if(dr.error) throw dr.error;
+  if(sr.error) throw sr.error;
+  if(cor.error) throw cor.error;
+  if(correctionResult.error && !String(correctionResult.error.message||'').toLowerCase().includes('ledger_balance_corrections')) throw correctionResult.error;
+
+  db.customers=(cr.data||[]).map(c=>({id:c.id,name:c.name||'',phone:c.phone||'',nic:c.nic||'',address:c.address||''}));
+  db.daily=(dr.data||[]).map(x=>{
+    const capital=Number(x.capital)||0;
+    const rate=(x.interest_rate==null || x.interest_rate==='') ? 10 : Number(x.interest_rate);
+    const originalCapital=Number(x.original_capital ?? capital)||capital;
+    const originalPlanDays=Number(x.original_plan_days ?? x.plan_days ?? 60)||60;
+    const baseInterest=Number(x.base_interest ?? (originalCapital*rate/100*(originalPlanDays/30)))||0;
+    const extensionCount=Number(x.extension_count)||0;
+    const planDays=Number(x.plan_days)||originalPlanDays;
+    const interest=Number(x.interest)||baseInterest;
+    const total=Number(x.total)||capital+interest;
+    return {id:x.id,customerId:x.customer_id,capital:originalCapital,originalCapital,interestPct:rate,
+      days:planDays,planDays,originalPlanDays,basePlanDays:originalPlanDays,months:planDays/30,
+      interest,total,baseInterest,extensionCount,autoExtended:extensionCount>0,
+      daily:planDays?total/planDays:0,start:x.start_date||'',createdDate:x.created_date||x.start_date||'',paid:0,
+      outstanding:total,status:x.status||'Active'};
+   });
+  const speedRows=(sr.data||[]);
+  // Speed Day records are stored in speed_loans using the SPEED_DAY marker.
+  db.speedDay=speedRows.filter(x=>x.cheque_no==='SPEED_DAY').map(x=>({
+   id:x.id,customerId:x.customer_id,capital:Number(x.capital)||0,rate:(x.rate==null || x.rate==='') ? 1000 : Number(x.rate),
+   interest:Number(x.interest)||0,total:Number(x.total)||0,
+   dailyInterest:Number(x.capital||0)/100000*(Number(x.rate)||1000),
+   startDate:x.cash_date||x.cheque_date||'',createdDate:x.created_date||x.cash_date||'',paid:0,outstanding:Number(x.total)||0,status:x.status||'Active'
+  }));
+  db.speed=speedRows.filter(x=>x.cheque_no!=='SPEED_DAY').map(x=>({
+   id:x.id,customerId:x.customer_id,capital:Number(x.capital)||0,rate:Number(x.rate)||0,days:Number(x.cheque_days)||0,
+   interest:Number(x.interest)||0,total:Number(x.total)||0,dailyInterest:(Number(x.cheque_days)||0)?(Number(x.interest)||0)/(Number(x.cheque_days)||0):0,
+   chequeDate:x.cheque_date||'',chequeNo:x.cheque_no||'',bank:x.bank||'',cashDate:x.cash_date||'',createdDate:x.created_date||x.cash_date||'',status:x.status||'Pending'
+  }));
+  const speedDayIds=new Set(db.speedDay.map(x=>x.id));
+  db.collections=(cor.data||[]).map(x=>({id:x.id,loanId:x.loan_id,type:speedDayIds.has(x.loan_id)?'speedDay':(x.loan_type||'speed'),customerId:x.customer_id,amount:Number(x.amount)||0,date:x.collection_date||''}));
+  db.corrections=(correctionResult.data||[]).map(x=>({id:x.id,loanId:x.loan_id,customerId:x.customer_id,amount:Number(x.amount)||0,date:x.correction_date||'',createdAt:x.created_at||''}));
+
+  // Rebuild paid/outstanding/status from collection history.
+  db.daily.forEach(loan=>{
+   loan.paid=db.collections.filter(c=>c.loanId===loan.id).reduce((s,c)=>s+(Number(c.amount)||0),0);
+   loan.outstanding=Math.max(0,loan.total-loan.paid);
+   if(loan.paid>=loan.total && loan.total>0) loan.status='Completed';
+  });
+  db.speed.forEach(loan=>{
+   const paid=db.collections.filter(c=>c.loanId===loan.id).reduce((s,c)=>s+(Number(c.amount)||0),0);
+   if(paid>=loan.total && loan.total>0) loan.status='Cleared';
+  });
+  db.speedDay.forEach(loan=>{
+   loan.paid=db.collections.filter(c=>c.loanId===loan.id).reduce((s,c)=>s+(Number(c.amount)||0),0);
+   // Once full capital has been paid, freeze the interest already accrued.
+   // Do not recalculate daily interest after reload for this loan.
+   if(loan.status!=='Capital Paid - Interest Frozen'){
+    const age=loanAgeDays(loan.startDate);
+    loan.interest=Math.max(0,loan.capital/100000*loan.rate*age);
+    loan.total=loan.capital+loan.interest;
+   }
+   loan.outstanding=Math.max(0,loan.total-loan.paid);
+   if(loan.paid>=loan.total && loan.total>0) loan.status='Completed';
+  });
+  render();
+  setDbStatus('Connected • Database data loaded ✓',true);
+ }catch(e){
+  render();
+  setDbStatus('Database load error: '+(e.message||'Check Supabase tables/policies'));
+ }
+}
+
+// Always load persistent Supabase data on startup/refresh.
+(async()=>{
+  render();
+  await testDatabase();
+  await loadFromDatabase();
+})();
+</script>
+
+
+</main>
+</body>
+</html>
